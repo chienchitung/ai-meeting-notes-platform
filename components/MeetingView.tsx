@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality, Blob } from '@google/genai';
-import { generateSummary } from '../services/geminiService';
+import { generateSummary, QuotaExceededError } from '../services/geminiService';
 import { LoadingSpinner, StopIcon } from './icons';
 import { SummaryData, TranscriptionChunk, Language } from '../types';
 
@@ -44,7 +45,6 @@ export const MeetingView: React.FC<MeetingViewProps> = ({ onMeetingEnd, onSummar
   const audioContextRef = useRef<AudioContext | null>(null);
   const scriptProcessorRef = useRef<ScriptProcessorNode | null>(null);
   const mediaStreamSourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
-  const speakerCounterRef = useRef(1);
   
   const stopMeeting = useCallback(async () => {
     if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
@@ -62,7 +62,7 @@ export const MeetingView: React.FC<MeetingViewProps> = ({ onMeetingEnd, onSummar
         session.close();
     }
     
-    const finalTranscript = transcript.map(t => `[${t.timestamp}] ${t.speaker}: ${t.text}`).join('\n');
+    const finalTranscript = transcript.map(t => `[${t.timestamp}] ${t.text}`).join('\n');
     onMeetingEnd(finalTranscript);
   }, [transcript, onMeetingEnd]);
 
@@ -86,8 +86,7 @@ export const MeetingView: React.FC<MeetingViewProps> = ({ onMeetingEnd, onSummar
                                     return [...prev.slice(0, -1), updatedLast];
                                 } else {
                                     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                                    const speaker = `${t.speaker} ${speakerCounterRef.current}`;
-                                    return [...prev, { speaker, text, isFinal: false, timestamp }];
+                                    return [...prev, { text, isFinal: false, timestamp }];
                                 }
                             });
                         }
@@ -97,7 +96,6 @@ export const MeetingView: React.FC<MeetingViewProps> = ({ onMeetingEnd, onSummar
                                     const lastIndex = prev.length - 1;
                                     const last = prev[lastIndex];
                                     if (last && !last.isFinal) {
-                                        speakerCounterRef.current++; // Increment for the next speaker turn
                                         const updated = [...prev];
                                         updated[lastIndex] = { ...last, isFinal: true };
                                         return updated;
@@ -153,15 +151,19 @@ export const MeetingView: React.FC<MeetingViewProps> = ({ onMeetingEnd, onSummar
 
   useEffect(() => {
     if(isSummarizing) {
-        const finalTranscript = transcript.map(t => `${t.speaker}: ${t.text}`).join('\n');
+        const finalTranscript = transcript.map(t => t.text).join('\n');
         generateSummary(finalTranscript, language)
             .then(onSummaryReady)
             .catch(err => {
                 console.error(err);
-                setError(t.apiError);
+                if (err instanceof QuotaExceededError) {
+                    setError(t.quotaError);
+                } else {
+                    setError(t.apiError);
+                }
             });
     }
-  }, [isSummarizing, onSummaryReady, t.apiError, language, transcript]);
+  }, [isSummarizing, onSummaryReady, t.apiError, language, transcript, t.quotaError]);
 
 
   if (isSummarizing) {
@@ -193,11 +195,8 @@ export const MeetingView: React.FC<MeetingViewProps> = ({ onMeetingEnd, onSummar
         <h3 className="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">{t.liveTranscript}</h3>
         <div className="space-y-4">
           {transcript.map((chunk, index) => (
-            <div key={index} className="grid grid-cols-[max-content,1fr] gap-x-4 items-start">
-              <div className="text-right whitespace-nowrap">
-                <span className="font-mono text-xs text-gray-500 mr-3">{chunk.timestamp}</span>
-                <span className="font-bold text-cyan-400">{chunk.speaker}:</span>
-              </div>
+            <div key={index} className="flex gap-x-4 items-start">
+              <span className="font-mono text-xs text-gray-500 whitespace-nowrap pt-1">{chunk.timestamp}</span>
               <p className={`text-gray-300 ${!chunk.isFinal ? 'opacity-60' : ''}`}>{chunk.text}</p>
             </div>
           ))}

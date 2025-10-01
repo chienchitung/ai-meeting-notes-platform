@@ -17,7 +17,6 @@ export interface SummaryData {
 }
 
 export interface TranscriptionChunk {
-  speaker: string;
   text: string;
   isFinal: boolean;
   timestamp: string;

@@ -24,7 +24,6 @@ export const locales: Record<Language, LocaleStrings> = {
     liveTranscript: 'Live Transcript',
     generatingSummary: 'Generating Summary...',
     generatingSummaryDescription: 'Our AI is analyzing the transcript to extract key insights. This may take a moment.',
-    speaker: 'Speaker',
 
     // Summary View
     meetingSummary: 'Meeting Summary',
@@ -39,6 +38,7 @@ export const locales: Record<Language, LocaleStrings> = {
     // Errors
     micError: 'Microphone access denied. Please allow microphone access in your browser settings to proceed.',
     apiError: 'An error occurred while communicating with the AI. Please try again.',
+    quotaError: 'You have exceeded your API quota. Please check your plan and billing details.',
   },
   [Language.ZH_TW]: {
     // Header
@@ -58,7 +58,6 @@ export const locales: Record<Language, LocaleStrings> = {
     liveTranscript: '即時文字稿',
     generatingSummary: '正在生成摘要...',
     generatingSummaryDescription: '我們的 AI 正在分析會議內容以提煉重點，請稍候片刻。',
-    speaker: '發言人',
     
     // Summary View
     meetingSummary: '會議摘要',
@@ -73,5 +72,6 @@ export const locales: Record<Language, LocaleStrings> = {
     // Errors
     micError: '麥克風權限遭拒。請在您的瀏覽器設定中允許使用麥克風。',
     apiError: '與 AI 通訊時發生錯誤，請再試一次。',
+    quotaError: '您已超出目前的配額，請檢查您的方案和帳單詳細資訊。',
   },
 };
