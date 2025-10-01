@@ -1,0 +1,7 @@
+{
+  "name": "AI Meeting Notes Platform",
+  "description": "An intelligent platform that uses AI to provide real-time transcription and generate smart summaries, action items, and key decisions for meetings.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
